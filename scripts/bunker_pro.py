@@ -117,3 +117,71 @@ if __name__ == "__main__":
     abiertos = BunkerPro.escanear_rango("127.0.0.1", puertos_comunes)
     print(f"\n[+] Puertos abiertos en localhost: {abiertos}")
     print("\n=== PRUEBAS V3 FINALIZADAS CON ÉXITO ===")
+import hashlib
+import os
+import re
+from datetime import datetime
+
+class BunkerAdvancedAudit:
+    """Módulo avanzado de auditoría de integridad y análisis de logs en tiempo real."""
+    
+    def __init__(self, target_dir="."):
+        self.target_dir = target_dir
+        self.signatures = {}
+
+    def calculate_file_hash(self, filepath):
+        """Calcula la huella SHA-256 de un archivo para control de integridad."""
+        sha256 = hashlib.sha256()
+        try:
+            with open(filepath, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    sha256.update(chunk)
+            return sha256.hexdigest()
+        except FileNotFoundError:
+            return None
+
+    def scan_directory_integrity(self):
+        """Genera el mapa de integridad criptográfica del directorio."""
+        print(f"\n[*] Generando mapa de integridad SHA-256 en: {self.target_dir}")
+        for root, _, files in os.walk(self.target_dir):
+            for file in files:
+                if file.endswith(".py") or file.endswith(".md"):
+                    full_path = os.path.join(root, file)
+                    file_hash = self.calculate_file_hash(full_path)
+                    self.signatures[full_path] = file_hash
+                    print(f"    [✔] {file} -> SHA256: {file_hash[:16]}...")
+        return self.signatures
+
+    def analyze_log_stream(self, log_lines):
+        """Analizador heurístico de patrones sospechosos en logs."""
+        print("\n[*] Iniciando análisis heurístico de logs...")
+        threat_patterns = {
+            "SQL Injection": r"(?i)(SELECT|INSERT|DELETE|DROP|UNION|OR 1=1)",
+            "Brute Force Attempt": r"(?i)(Failed password|AUTH_FAILURE|Unauthorized)",
+            "Path Traversal": r"(\.\./\.\./|\.\.\\\.\.\\)"
+        }
+        
+        detected_threats = []
+        for index, line in enumerate(log_lines, 1):
+            for threat_type, pattern in threat_patterns.items():
+                if re.search(pattern, line):
+                    event = f"[ALERTA] Línea {index}: {threat_type} detectado -> '{line.strip()}'"
+                    detected_threats.append(event)
+                    print(f"    ⚠️  {event}")
+        
+        if not detected_threats:
+            print("    [+] No se detectaron anomalías o amenazas en los registros de eventos.")
+        return detected_threats
+
+# Ejemplo de integración en el flujo principal:
+if __name__ == "__main__":
+    audit = BunkerAdvancedAudit()
+    audit.scan_directory_integrity()
+    
+    # Simulación de prueba de logs de producción
+    sample_logs = [
+        "192.168.1.10 - - [15/Oct/2026] 'GET /index.html HTTP/1.1' 200",
+        "10.0.0.5 - - [15/Oct/2026] 'POST /login HTTP/1.1' Failed password for root",
+        "172.16.0.2 - - [15/Oct/2026] 'GET /search?q=1 UNION SELECT username,password FROM users' 200"
+    ]
+    audit.analyze_log_stream(sample_logs)
